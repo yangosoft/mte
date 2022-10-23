@@ -3,6 +3,7 @@ use crossterm::event::Event;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
+use crossterm::terminal;
 use std::time::Duration;
 
 use crate::render::Render;
@@ -37,6 +38,11 @@ impl Editor {
         self.render.clear_screen();
     }
 
+    fn draw_status_bar(&mut self) -> crossterm::Result<bool> {
+        self.render.draw_status_bar()?;
+        Ok(true)
+    }
+
     fn process_keypress(&mut self) -> crossterm::Result<bool> {
         let k = self.reader.read_key()?;
 
@@ -65,6 +71,14 @@ impl Editor {
 
     pub fn run(&mut self) -> crossterm::Result<bool> {
         //self.output.refresh_screen()?;
+        self.draw_status_bar()?;
         self.process_keypress()
+    }
+}
+
+impl Drop for Editor {
+    fn drop(&mut self) {
+        terminal::disable_raw_mode().expect("Unable to disable raw mode");
+        self.render.clear_screen().expect("error");
     }
 }

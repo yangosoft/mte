@@ -3,6 +3,9 @@ use crossterm::event;
 use crossterm::event::Event;
 use crossterm::event::KeyEvent;
 use std::time::Duration;
+
+use crate::render::Render;
+
 struct Reader;
 
 impl Reader {
@@ -18,17 +21,27 @@ impl Reader {
 }
 pub struct Editor {
     reader: Reader,
+    render: Render,
 }
 
 
 impl Editor {
     pub fn new() -> Self {
         Self {
-            reader : Reader
+            reader : Reader,
+            render: Render::new()
         }
+        
+    }
+
+    pub fn clear_screen(&mut self)
+    {
+        self.render.clear_screen();
     }
 
     fn process_keypress(&mut self) -> crossterm::Result<bool> {
+        let k = self.reader.read_key()?;
+        print!("{:?}",k.code);
 
         Ok(true)
     }

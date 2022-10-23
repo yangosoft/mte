@@ -11,9 +11,7 @@ fn main() -> crossterm::Result<()> {
     terminal::enable_raw_mode()?;
     let mut e = Editor::new();
     e.clear_screen();
-    loop {
-        e.run()?;    
-    }
+    while e.run()? {}
     
     Ok(())
 }

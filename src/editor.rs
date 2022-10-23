@@ -1,7 +1,8 @@
-
 use crossterm::event;
 use crossterm::event::Event;
+use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
+use crossterm::event::KeyModifiers;
 use std::time::Duration;
 
 use crate::render::Render;
@@ -24,24 +25,40 @@ pub struct Editor {
     render: Render,
 }
 
-
 impl Editor {
     pub fn new() -> Self {
         Self {
-            reader : Reader,
-            render: Render::new()
+            reader: Reader,
+            render: Render::new(),
         }
-        
     }
 
-    pub fn clear_screen(&mut self)
-    {
+    pub fn clear_screen(&mut self) {
         self.render.clear_screen();
     }
 
     fn process_keypress(&mut self) -> crossterm::Result<bool> {
         let k = self.reader.read_key()?;
-        print!("{:?}",k.code);
+
+        match k {
+            KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+            } => self.render.insert_newline(),
+            KeyEvent {
+                code: code @ (KeyCode::Char(..) | KeyCode::Tab),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            } => self.render.insert_char(match code {
+                KeyCode::Tab => '\t',
+                KeyCode::Char(ch) => ch,
+                _ => unreachable!(),
+            }),
+            KeyEvent {
+                code: KeyCode::F(1),
+                modifiers: KeyModifiers::NONE,
+            } => return Ok(false),
+            _ => {}
+        }
 
         Ok(true)
     }

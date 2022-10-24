@@ -21,8 +21,7 @@ impl Line {
         self.line_content.remove(at);
     }
 
-    pub fn get_content(&mut self) -> String
-    {
+    pub fn get_content(&mut self) -> String {
         self.line_content.clone()
     }
 }
@@ -40,6 +39,10 @@ impl LineBuffer {
 
     pub fn insert_row(&mut self, at: usize, contents: String) {
         let mut line = Line::new(contents, String::new());
+
+        if self.line_contents.len() > at {
+            self.line_contents.remove(at);
+        }
         self.line_contents.insert(at, line);
     }
 
@@ -49,5 +52,17 @@ impl LineBuffer {
         } else {
             self.line_contents[pos_y].insert_char(pos_x, c);
         }
+    }
+
+    pub fn get_line(&mut self, line_num: usize) -> Result<String, &'static str> {
+        if line_num >= self.line_contents.len() {
+            return Err("Index of out bounds");
+        }
+
+        Ok(self.line_contents[line_num].get_content().clone())
+    }
+
+    pub fn get_num_lines(&self) -> usize {
+        return self.line_contents.len();
     }
 }

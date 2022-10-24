@@ -1,3 +1,4 @@
+use crossterm::event::KeyCode;
 use crossterm::style::{
     Attribute, Color, Print, ResetColor, SetAttribute, SetBackgroundColor, SetForegroundColor,
 };
@@ -6,10 +7,13 @@ use crossterm::{cursor, execute, queue, terminal};
 
 use std::io::{stdout, Write};
 
+use crate::linebuffer::LineBuffer;
+
 pub struct Render {
     x: u16,
     y: u16,
     win_size: (usize, usize),
+    lines: LineBuffer,
 }
 
 impl Render {
@@ -21,7 +25,20 @@ impl Render {
             x: 0,
             y: 0,
             win_size,
+            lines: LineBuffer::new(),
         }
+    }
+
+    fn render_line(&mut self, line_num: u16, line: &String) {
+        queue!(
+            stdout(),
+            cursor::Hide,
+            terminal::Clear(ClearType::CurrentLine),
+            cursor::MoveTo(0, line_num),
+            Print(line),
+            cursor::Show
+        );
+        stdout().flush().unwrap();
     }
 
     pub fn clear_screen(&mut self) -> crossterm::Result<()> {
@@ -30,11 +47,14 @@ impl Render {
     }
 
     pub fn insert_char(&mut self, ch: char) {
-        queue!(stdout(), cursor::MoveTo(self.x, self.y), cursor::Show);
+        /*queue!(stdout(), cursor::MoveTo(self.x, self.y), cursor::Show);
         stdout().flush().unwrap();
         let s = String::from(ch);
         print!("{}", s);
-        stdout().flush().unwrap();
+        stdout().flush().unwrap();*/
+        self.lines.insert_char(self.x as usize, self.y as usize, ch);
+        let s = self.lines.get_line(self.y as usize).unwrap();
+        self.render_line(self.y, &s);
         self.x += 1;
     }
 
@@ -43,11 +63,54 @@ impl Render {
         self.x = 0;
         print!("\n");
         stdout().flush().unwrap();
+        self.lines.insert_row(self.y as usize, String::new())
+    }
+
+    pub fn delete_char(&mut self) {
+        if self.x > 0 {
+            self.x -= 1;
+        }
+        let mut l = self.lines.get_line(self.y as usize).unwrap();
+        l.remove(self.x as usize);
+        self.lines.insert_row(self.y as usize, l.clone());
+        self.render_line(self.y, &l);
+    }
+
+    pub fn move_cursor(&mut self, direction: KeyCode) {
+        match direction {
+            KeyCode::Up => {
+                if self.y > 0 {
+                    self.y -= 1;
+                    let n = self.lines.get_line(self.y as usize).unwrap().len() as u16;
+                    self.x = n as u16;
+                }
+            }
+            KeyCode::Left => {
+                if (self.x > 0) {
+                    self.x -= 1;
+                }
+            }
+            KeyCode::Down => {
+                if self.lines.get_num_lines() > self.y as usize {
+                    self.y += 1;
+                }
+            }
+            KeyCode::Right => {
+                let n = self.lines.get_line(self.y as usize).unwrap().len() as u16;
+                if self.x < n {
+                    self.x += 1;
+                }
+            }
+            KeyCode::End => {
+                let n = self.lines.get_line(self.y as usize).unwrap().len();
+                self.x = n as u16;
+            }
+            KeyCode::Home => self.x = 0,
+            _ => unimplemented!(),
+        }
     }
 
     pub fn draw_status_bar(&mut self) -> crossterm::Result<bool> {
-
-
         /*let menu = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ";
         let fill = self.win_size.1 - menu.len();
 
@@ -59,8 +122,7 @@ impl Render {
 
         let mut s: String = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ".to_string();
         let menu_size = s.len();
-        for n in 0..self.win_size.0 - menu_size
-        {
+        for n in 0..self.win_size.0 - menu_size {
             s.push(' ');
         }
 

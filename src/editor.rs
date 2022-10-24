@@ -60,6 +60,27 @@ impl Editor {
                 _ => unreachable!(),
             }),
             KeyEvent {
+                code:
+                    direction
+                    @
+                    (KeyCode::Up
+                    | KeyCode::Down
+                    | KeyCode::Left
+                    | KeyCode::Right
+                    | KeyCode::Home
+                    | KeyCode::End),
+                modifiers: KeyModifiers::NONE,
+            } => self.render.move_cursor(direction),
+            KeyEvent {
+                code: key @ (KeyCode::Backspace | KeyCode::Delete),
+                modifiers: KeyModifiers::NONE,
+            } => {
+                if matches!(key, KeyCode::Delete) {
+                    self.render.move_cursor(KeyCode::Right)
+                }
+                self.render.delete_char()
+            }
+            KeyEvent {
                 code: KeyCode::F(1),
                 modifiers: KeyModifiers::NONE,
             } => return Ok(false),

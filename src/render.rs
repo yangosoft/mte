@@ -6,10 +6,13 @@ use crossterm::{cursor, execute, queue, terminal};
 
 use std::io::{stdout, Write};
 
+use crate::linebuffer::LineBuffer;
+
 pub struct Render {
     x: u16,
     y: u16,
     win_size: (usize, usize),
+    lines: LineBuffer
 }
 
 impl Render {
@@ -21,6 +24,7 @@ impl Render {
             x: 0,
             y: 0,
             win_size,
+            lines: LineBuffer::new()
         }
     }
 
@@ -35,6 +39,7 @@ impl Render {
         let s = String::from(ch);
         print!("{}", s);
         stdout().flush().unwrap();
+        self.lines.insert_char(self.x as usize, self.y as usize, ch);
         self.x += 1;
     }
 
@@ -43,11 +48,10 @@ impl Render {
         self.x = 0;
         print!("\n");
         stdout().flush().unwrap();
+        self.lines.insert_row(self.y as usize, String::new())
     }
 
     pub fn draw_status_bar(&mut self) -> crossterm::Result<bool> {
-
-
         /*let menu = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ";
         let fill = self.win_size.1 - menu.len();
 
@@ -59,8 +63,7 @@ impl Render {
 
         let mut s: String = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ".to_string();
         let menu_size = s.len();
-        for n in 0..self.win_size.0 - menu_size
-        {
+        for n in 0..self.win_size.0 - menu_size {
             s.push(' ');
         }
 

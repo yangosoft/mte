@@ -2,6 +2,8 @@ mod editor;
 
 mod render;
 
+mod linebuffer;
+
 use editor::Editor;
 
 use crossterm::terminal;

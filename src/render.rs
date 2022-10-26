@@ -91,13 +91,9 @@ impl Render {
             Log(&new_content);
             self.x = 0;
             self.lines.insert_row(self.y as usize, new_content.clone());
-            self.render_line(self.y, &new_content);
 
+            self.render_line(self.y, &new_content);
             self.render_until_end(self.y);
-            /*for line_num in self.y..self.lines.get_num_lines() as u16 {
-                let content = self.lines.get_line(line_num as usize).unwrap();
-                self.render_line(line_num, &content);
-            }*/
         }
     }
 
@@ -117,18 +113,29 @@ impl Render {
         );
     }
 
-    pub fn delete_char(&mut self) {
+    pub fn delete_char(&mut self, is_backspace: bool) {
         if self.x > 0 {
             self.x -= 1;
-
             let mut l = self.lines.get_line(self.y as usize).unwrap();
             l.remove(self.x as usize);
             self.lines.replace_row(self.y as usize, l.clone());
             self.render_line(self.y, &l);
-        } else if (self.y as usize) < self.lines.get_num_lines() && self.y > 0 {
+        } else if (self.y as usize) < self.lines.get_num_lines()
+            && self.y > 0
+            && self.x == 0
+            && is_backspace
+        {
             self.lines.remove_row(self.y as usize);
             self.y -= 1;
             self.x = self.lines.get_line(self.y as usize).unwrap().len() as u16;
+            self.render_until_end(self.y);
+        } else if (self.y as usize) < self.lines.get_num_lines() && self.x > 0 && !is_backspace {
+            let old_content = self.lines.remove_row(self.y as usize);
+            self.y -= 1;
+            let content = self.lines.get_line(self.y as usize).unwrap();
+            self.x = content.len() as u16;
+            let new_content = content + &old_content;
+            self.lines.replace_row(self.y as usize, new_content);
             self.render_until_end(self.y);
         }
     }

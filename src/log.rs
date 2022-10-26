@@ -1,3 +1,6 @@
+use std::env;
 pub fn Log(text: &str) {
-    eprintln!("{}", text);
+    if env::var("TRACE_ENABLED").is_ok() {
+        eprintln!("{}", text);
+    }
 }

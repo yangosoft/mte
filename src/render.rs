@@ -36,8 +36,10 @@ impl Render {
     }
 
     fn render_line(&mut self, line_num: u16, line: &String) {
-
-        Log(&fmt::format(format_args!("Rendering line {} content: {}", line_num, line)));
+        Log(&fmt::format(format_args!(
+            "Rendering line {} content: {}",
+            line_num, line
+        )));
 
         queue!(
             stdout(),
@@ -95,25 +97,11 @@ impl Render {
             self.lines.insert_row(self.y as usize, new_content.clone());
             self.render_line(self.y, &new_content);
 
-            for line_num in self.y .. self.lines.get_num_lines()  as u16
-            {
+            for line_num in self.y..self.lines.get_num_lines() as u16 {
                 let content = self.lines.get_line(line_num as usize).unwrap();
                 self.render_line(line_num, &content);
             }
-
         }
-        //print!("\n");
-        stdout().flush().unwrap();
-
-        return;
-        //}
-
-        /*let mut l = self.lines.get_line(self.y as usize).unwrap();
-        self.y += 1;
-        self.x = 0;
-        print!("\n");
-        stdout().flush().unwrap();
-        self.lines.insert_row(self.y as usize, String::new())*/
     }
 
     pub fn delete_char(&mut self) {

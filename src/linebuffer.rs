@@ -1,5 +1,3 @@
-use std::vec;
-
 struct Line {
     line_content: String,
     render: String,
@@ -38,6 +36,11 @@ impl LineBuffer {
     }
 
     pub fn insert_row(&mut self, at: usize, contents: String) {
+        let mut line = Line::new(contents, String::new());
+        self.line_contents.insert(at, line);
+    }
+
+    pub fn replace_row(&mut self, at: usize, contents: String) {
         let mut line = Line::new(contents, String::new());
 
         if self.line_contents.len() > at {

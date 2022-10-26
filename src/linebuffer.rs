@@ -1,3 +1,5 @@
+use crate::log::Log;
+use std::fmt;
 struct Line {
     line_content: String,
     render: String,
@@ -36,17 +38,24 @@ impl LineBuffer {
     }
 
     pub fn insert_row(&mut self, at: usize, contents: String) {
+        Log(&fmt::format(format_args!("Insert row {}", at)));
         let mut line = Line::new(contents, String::new());
         self.line_contents.insert(at, line);
     }
 
     pub fn replace_row(&mut self, at: usize, contents: String) {
+        Log(&fmt::format(format_args!("Replace row {}", at)));
         let mut line = Line::new(contents, String::new());
 
         if self.line_contents.len() > at {
             self.line_contents.remove(at);
         }
         self.line_contents.insert(at, line);
+    }
+
+    pub fn remove_row(&mut self, at: usize) {
+        Log(&fmt::format(format_args!("Removing row {}", at)));
+        self.line_contents.remove(at);
     }
 
     pub fn insert_char(&mut self, pos_x: usize, pos_y: usize, c: char) {

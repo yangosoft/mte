@@ -5,6 +5,7 @@ use crossterm::style::{
 use crossterm::terminal::ClearType;
 use crossterm::{cursor, execute, queue, terminal};
 
+use std::f32::consts::E;
 use std::io::{stdout, Write};
 
 use crate::linebuffer::LineBuffer;
@@ -58,11 +59,6 @@ impl Render {
     }
 
     pub fn insert_char(&mut self, ch: char) {
-        /*queue!(stdout(), cursor::MoveTo(self.x, self.y), cursor::Show);
-        stdout().flush().unwrap();
-        let s = String::from(ch);
-        print!("{}", s);
-        stdout().flush().unwrap();*/
         self.lines.insert_char(self.x as usize, self.y as usize, ch);
         let s = self.lines.get_line(self.y as usize).unwrap();
         self.render_line(self.y, &s);
@@ -97,21 +93,44 @@ impl Render {
             self.lines.insert_row(self.y as usize, new_content.clone());
             self.render_line(self.y, &new_content);
 
-            for line_num in self.y..self.lines.get_num_lines() as u16 {
+            self.render_until_end(self.y);
+            /*for line_num in self.y..self.lines.get_num_lines() as u16 {
                 let content = self.lines.get_line(line_num as usize).unwrap();
                 self.render_line(line_num, &content);
-            }
+            }*/
         }
+    }
+
+    fn render_until_end(&mut self, from: u16) {
+        for line_num in from..self.lines.get_num_lines() as u16 {
+            let content = self.lines.get_line(line_num as usize).unwrap();
+            self.render_line(line_num, &content);
+        }
+
+        queue!(
+            stdout(),
+            cursor::Hide,
+            cursor::MoveTo(0, self.lines.get_num_lines() as u16),
+            terminal::Clear(ClearType::FromCursorDown),
+            cursor::MoveTo(self.x, self.y),
+            cursor::Show
+        );
     }
 
     pub fn delete_char(&mut self) {
         if self.x > 0 {
             self.x -= 1;
+
+            let mut l = self.lines.get_line(self.y as usize).unwrap();
+            l.remove(self.x as usize);
+            self.lines.replace_row(self.y as usize, l.clone());
+            self.render_line(self.y, &l);
+        } else if (self.y as usize) < self.lines.get_num_lines() && self.y > 0 {
+            self.lines.remove_row(self.y as usize);
+            self.y -= 1;
+            self.x = self.lines.get_line(self.y as usize).unwrap().len() as u16;
+            self.render_until_end(self.y);
         }
-        let mut l = self.lines.get_line(self.y as usize).unwrap();
-        l.remove(self.x as usize);
-        self.lines.insert_row(self.y as usize, l.clone());
-        self.render_line(self.y, &l);
     }
 
     pub fn get_current_cursor(&self) -> (u16, u16) {
@@ -155,20 +174,11 @@ impl Render {
     }
 
     pub fn draw_status_bar(&mut self) -> crossterm::Result<bool> {
-        /*let menu = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ";
-        let fill = self.win_size.1 - menu.len();
-
-        let mut s = std::iter::repeat(" ")
-            .take(fill)
-            .collect::<String>();
-        s = menu.to_owned() + &s;
-        */
-
-        //let mut s: String = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ".to_string();
         let pos = self.get_current_cursor();
+        let num_lines = self.lines.get_num_lines();
         let mut s = fmt::format(format_args!(
-            "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save | Line: {} Char: {}",
-            pos.1, pos.0
+            "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save | Line: {} Char: {} Lines: {}",
+            pos.1, pos.0, num_lines
         ));
 
         let menu_size = s.len();

@@ -53,9 +53,9 @@ impl LineBuffer {
         self.line_contents.insert(at, line);
     }
 
-    pub fn remove_row(&mut self, at: usize) {
+    pub fn remove_row(&mut self, at: usize) -> String {
         Log(&fmt::format(format_args!("Removing row {}", at)));
-        self.line_contents.remove(at);
+        return self.line_contents.remove(at).line_content;
     }
 
     pub fn insert_char(&mut self, pos_x: usize, pos_y: usize, c: char) {

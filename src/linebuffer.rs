@@ -1,5 +1,3 @@
-use std::vec;
-
 struct Line {
     line_content: String,
     render: String,

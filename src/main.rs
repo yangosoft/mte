@@ -4,6 +4,8 @@ mod render;
 
 mod linebuffer;
 
+mod log;
+
 use editor::Editor;
 
 use crossterm::terminal;

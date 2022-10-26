@@ -8,6 +8,9 @@ use crossterm::{cursor, execute, queue, terminal};
 use std::io::{stdout, Write};
 
 use crate::linebuffer::LineBuffer;
+use crate::log::Log;
+
+use std::fmt;
 
 pub struct Render {
     x: u16,
@@ -21,11 +24,14 @@ impl Render {
         let win_size = terminal::size()
             .map(|(x, y)| (x as usize, y as usize - 2))
             .unwrap();
+        let mut ln = LineBuffer::new();
+        ln.insert_row(0, "".to_string());
+
         Self {
             x: 0,
             y: 0,
             win_size,
-            lines: LineBuffer::new(),
+            lines: ln,
         }
     }
 
@@ -59,11 +65,45 @@ impl Render {
     }
 
     pub fn insert_newline(&mut self) {
+        Log("insert_new_line");
+        let s = fmt::format(format_args!("Num lines {}", self.lines.get_num_lines()));
+
+        Log(&s);
+        let content = self.lines.get_line(self.y as usize).unwrap();
+        //if (self.y as usize) == self.lines.get_num_lines() - 1 {
+        Log("Create one");
+        self.y += 1;
+
+        if content.len() == 0 || (self.x as usize) == content.len() {
+            Log("Is empty!");
+            self.x = 0;
+            self.lines.insert_row(self.y as usize, String::new());
+        } else if (self.x as usize) < content.len() {
+            Log("Not empty!: ");
+            let slice_content = &content[self.x as usize..];
+            let slice_old_content = &content[..self.x as usize];
+            let new_old_content = String::from(slice_old_content);
+            self.lines
+                .insert_row((self.y - 1) as usize, new_old_content.clone());
+            self.render_line(self.y - 1, &new_old_content);
+            let new_content = String::from(slice_content);
+            Log(&new_content);
+            self.x = 0;
+            self.lines.insert_row(self.y as usize, new_content.clone());
+            self.render_line(self.y, &new_content);
+        }
+        //print!("\n");
+        stdout().flush().unwrap();
+
+        return;
+        //}
+
+        /*let mut l = self.lines.get_line(self.y as usize).unwrap();
         self.y += 1;
         self.x = 0;
         print!("\n");
         stdout().flush().unwrap();
-        self.lines.insert_row(self.y as usize, String::new())
+        self.lines.insert_row(self.y as usize, String::new())*/
     }
 
     pub fn delete_char(&mut self) {
@@ -76,6 +116,10 @@ impl Render {
         self.render_line(self.y, &l);
     }
 
+    pub fn get_current_cursor(&self) -> (u16, u16) {
+        (self.x, self.y)
+    }
+
     pub fn move_cursor(&mut self, direction: KeyCode) {
         match direction {
             KeyCode::Up => {
@@ -86,13 +130,15 @@ impl Render {
                 }
             }
             KeyCode::Left => {
-                if (self.x > 0) {
+                if self.x > 0 {
                     self.x -= 1;
                 }
             }
             KeyCode::Down => {
-                if self.lines.get_num_lines() > self.y as usize {
+                if (self.y as usize) < self.lines.get_num_lines() - 1 {
                     self.y += 1;
+                    let n = self.lines.get_line(self.y as usize).unwrap().len() as u16;
+                    self.x = n as u16;
                 }
             }
             KeyCode::Right => {
@@ -120,7 +166,13 @@ impl Render {
         s = menu.to_owned() + &s;
         */
 
-        let mut s: String = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ".to_string();
+        //let mut s: String = "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save ".to_string();
+        let pos = self.get_current_cursor();
+        let mut s = fmt::format(format_args!(
+            "F1 Exit | F2 New | F3 Search | F4 Open | F5 Save | Line: {} Char: {}",
+            pos.1, pos.0
+        ));
+
         let menu_size = s.len();
         for n in 0..self.win_size.0 - menu_size {
             s.push(' ');

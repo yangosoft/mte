@@ -36,11 +36,14 @@ impl Render {
     }
 
     fn render_line(&mut self, line_num: u16, line: &String) {
+
+        Log(&fmt::format(format_args!("Rendering line {} content: {}", line_num, line)));
+
         queue!(
             stdout(),
             cursor::Hide,
-            terminal::Clear(ClearType::CurrentLine),
             cursor::MoveTo(0, line_num),
+            terminal::Clear(ClearType::CurrentLine),
             Print(line),
             cursor::Show
         );
@@ -84,13 +87,20 @@ impl Render {
             let slice_old_content = &content[..self.x as usize];
             let new_old_content = String::from(slice_old_content);
             self.lines
-                .insert_row((self.y - 1) as usize, new_old_content.clone());
+                .replace_row((self.y - 1) as usize, new_old_content.clone());
             self.render_line(self.y - 1, &new_old_content);
             let new_content = String::from(slice_content);
             Log(&new_content);
             self.x = 0;
             self.lines.insert_row(self.y as usize, new_content.clone());
             self.render_line(self.y, &new_content);
+
+            for line_num in self.y .. self.lines.get_num_lines()  as u16
+            {
+                let content = self.lines.get_line(line_num as usize).unwrap();
+                self.render_line(line_num, &content);
+            }
+
         }
         //print!("\n");
         stdout().flush().unwrap();

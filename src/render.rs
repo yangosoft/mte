@@ -35,7 +35,7 @@ impl Render {
             y: 0,
             win_size,
             lines: ln,
-            offset_x: 10,
+            offset_x: 0,
             offset_y: 0
         }
     }

@@ -18,6 +18,8 @@ pub struct Render {
     y: u16,
     win_size: (usize, usize),
     lines: LineBuffer,
+    offset_x: u16,
+    offset_y: u16
 }
 
 impl Render {
@@ -33,6 +35,8 @@ impl Render {
             y: 0,
             win_size,
             lines: ln,
+            offset_x: 0,
+            offset_y: 0
         }
     }
 
@@ -45,7 +49,7 @@ impl Render {
         queue!(
             stdout(),
             cursor::Hide,
-            cursor::MoveTo(0, line_num),
+            cursor::MoveTo(self.offset_x, line_num),
             terminal::Clear(ClearType::CurrentLine),
             Print(line),
             cursor::Show
@@ -77,7 +81,7 @@ impl Render {
 
         if content.len() == 0 || (self.x as usize) == content.len() {
             Log("Is empty!");
-            self.x = 0;
+            self.x = 0 + self.offset_x;
             self.lines.insert_row(self.y as usize, String::new());
         } else if (self.x as usize) < content.len() {
             Log("Not empty!: ");
@@ -89,7 +93,7 @@ impl Render {
             self.render_line(self.y - 1, &new_old_content);
             let new_content = String::from(slice_content);
             Log(&new_content);
-            self.x = 0;
+            self.x = 0 + self.offset_x;
             self.lines.insert_row(self.y as usize, new_content.clone());
 
             self.render_line(self.y, &new_content);
@@ -205,7 +209,7 @@ impl Render {
             SetAttribute(Attribute::Reset)
         )?;
         //print!("F1 Exit");
-        queue!(stdout(), cursor::MoveTo(self.x, self.y), cursor::Show)?;
+        queue!(stdout(), cursor::MoveTo(self.offset_x + self.x, self.y), cursor::Show)?;
 
         stdout().flush()?;
         Ok(true)

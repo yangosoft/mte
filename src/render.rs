@@ -18,6 +18,8 @@ pub struct Render {
     y: u16,
     win_size: (usize, usize),
     lines: LineBuffer,
+    offset_x: u16,
+    offset_y: u16
 }
 
 impl Render {
@@ -33,6 +35,8 @@ impl Render {
             y: 0,
             win_size,
             lines: ln,
+            offset_x: 10,
+            offset_y: 0
         }
     }
 
@@ -45,7 +49,7 @@ impl Render {
         queue!(
             stdout(),
             cursor::Hide,
-            cursor::MoveTo(0, line_num),
+            cursor::MoveTo(self.offset_x, line_num),
             terminal::Clear(ClearType::CurrentLine),
             Print(line),
             cursor::Show
@@ -205,7 +209,7 @@ impl Render {
             SetAttribute(Attribute::Reset)
         )?;
         //print!("F1 Exit");
-        queue!(stdout(), cursor::MoveTo(self.x, self.y), cursor::Show)?;
+        queue!(stdout(), cursor::MoveTo(self.offset_x + self.x, self.y), cursor::Show)?;
 
         stdout().flush()?;
         Ok(true)

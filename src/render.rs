@@ -81,7 +81,7 @@ impl Render {
 
         if content.len() == 0 || (self.x as usize) == content.len() {
             Log("Is empty!");
-            self.x = 0;
+            self.x = 0 + self.offset_x;
             self.lines.insert_row(self.y as usize, String::new());
         } else if (self.x as usize) < content.len() {
             Log("Not empty!: ");
@@ -93,7 +93,7 @@ impl Render {
             self.render_line(self.y - 1, &new_old_content);
             let new_content = String::from(slice_content);
             Log(&new_content);
-            self.x = 0;
+            self.x = 0 + self.offset_x;
             self.lines.insert_row(self.y as usize, new_content.clone());
 
             self.render_line(self.y, &new_content);

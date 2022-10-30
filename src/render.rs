@@ -5,8 +5,8 @@ use crossterm::style::{
 use crossterm::terminal::ClearType;
 use crossterm::{cursor, execute, queue, terminal};
 
-use std::f32::consts::E;
 use std::io::{stdout, Write};
+
 
 use crate::linebuffer::LineBuffer;
 use crate::log::Log;
@@ -19,7 +19,7 @@ pub struct Render {
     win_size: (usize, usize),
     lines: LineBuffer,
     offset_x: u16,
-    offset_y: u16
+    offset_y: u16,
 }
 
 impl Render {
@@ -36,7 +36,7 @@ impl Render {
             win_size,
             lines: ln,
             offset_x: 0,
-            offset_y: 0
+            offset_y: 0,
         }
     }
 
@@ -118,6 +118,51 @@ impl Render {
     }
 
     pub fn delete_char(&mut self, is_backspace: bool) {
+        if is_backspace {
+            if self.x > 0 {
+                self.x -= 1;
+                let mut l = self.lines.get_line(self.y as usize).unwrap();
+                l.remove(self.x as usize);
+                self.lines.replace_row(self.y as usize, l.clone());
+                self.render_line(self.y, &l);
+            } else if self.y > 0 {
+                let old_content = self.lines.remove_row(self.y as usize);
+                self.y -= 1;
+                let content = self.lines.get_line(self.y as usize).unwrap();
+                self.x = content.len() as u16;
+                let new_content = content + &old_content;
+                self.lines.replace_row(self.y as usize, new_content);
+                self.render_until_end(self.y);
+            }
+        } else {
+            let content = self.lines.get_line(self.y as usize).unwrap();
+            let c_len = content.len();
+            if c_len == 0 {
+                self.lines.remove_row(self.y as usize);
+                self.render_until_end(self.y);
+            }else if self.x == c_len as u16
+            {
+                let next_line = self.y + 1;
+                if next_line < self.lines.get_num_lines() as u16
+                {
+                    let mut current_line = self.lines.get_line(self.y.into()).unwrap();
+                    let next_line = self.lines.remove_row(next_line as usize);
+                    current_line += &next_line;
+                    self.lines.replace_row(self.y as usize, current_line);
+                    self.render_until_end(self.y);
+                } 
+            }
+            else if (self.x as usize) <= c_len {
+                self.x -= 1;
+                let mut l = self.lines.get_line(self.y as usize).unwrap();
+                l.remove(self.x as usize);
+                self.lines.replace_row(self.y as usize, l.clone());
+                self.render_line(self.y, &l);
+            }
+        }
+    }
+
+    pub fn _aqdelete_char(&mut self, is_backspace: bool) {
         if self.x > 0 {
             self.x -= 1;
             let mut l = self.lines.get_line(self.y as usize).unwrap();
@@ -209,7 +254,11 @@ impl Render {
             SetAttribute(Attribute::Reset)
         )?;
         //print!("F1 Exit");
-        queue!(stdout(), cursor::MoveTo(self.offset_x + self.x, self.y), cursor::Show)?;
+        queue!(
+            stdout(),
+            cursor::MoveTo(self.offset_x + self.x, self.y),
+            cursor::Show
+        )?;
 
         stdout().flush()?;
         Ok(true)

@@ -39,13 +39,13 @@ impl LineBuffer {
 
     pub fn insert_row(&mut self, at: usize, contents: String) {
         Log(&fmt::format(format_args!("Insert row {}", at)));
-        let mut line = Line::new(contents, String::new());
+        let line = Line::new(contents, String::new());
         self.line_contents.insert(at, line);
     }
 
     pub fn replace_row(&mut self, at: usize, contents: String) {
         Log(&fmt::format(format_args!("Replace row {}", at)));
-        let mut line = Line::new(contents, String::new());
+        let line = Line::new(contents, String::new());
 
         if self.line_contents.len() > at {
             self.line_contents.remove(at);

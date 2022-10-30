@@ -75,9 +75,9 @@ impl Editor {
                 code: key @ (KeyCode::Backspace | KeyCode::Delete),
                 modifiers: KeyModifiers::NONE,
             } => {
-                let mut is_backspace = false;
+                let mut is_backspace = true;
                 if matches!(key, KeyCode::Delete) {
-                    is_backspace = true;
+                    is_backspace = false;
                     self.render.move_cursor(KeyCode::Right)
                 }
                 self.render.delete_char(is_backspace)

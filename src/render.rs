@@ -19,7 +19,7 @@ pub struct Render {
     win_size: (usize, usize),
     lines: LineBuffer,
     offset_x: u16,
-    offset_y: u16
+    offset_y: u16,
 }
 
 impl Render {
@@ -36,7 +36,7 @@ impl Render {
             win_size,
             lines: ln,
             offset_x: 0,
-            offset_y: 0
+            offset_y: 0,
         }
     }
 
@@ -118,7 +118,21 @@ impl Render {
     }
 
     pub fn delete_char(&mut self, is_backspace: bool) {
-        if self.x > 0 {
+        let mut line = self.lines.get_line(self.y as usize).unwrap();
+        let line_len = line.len() as u16;
+
+        if self.x > 0 && self.x >= line_len && !is_backspace {
+            // we are at the end of line, we need to merge with next line
+            // if there is no next line, we just do nothing
+            if (self.y as usize) >= self.lines.get_num_lines() - 1 {
+                return;
+            }
+
+            let old_content = self.lines.remove_row((self.y + 1) as usize);
+            let new_content = line + &old_content;
+            self.lines.replace_row(self.y as usize, new_content);
+            self.render_until_end(self.y);
+        } else if self.x > 0 {
             self.x -= 1;
             let mut l = self.lines.get_line(self.y as usize).unwrap();
             l.remove(self.x as usize);
@@ -209,7 +223,11 @@ impl Render {
             SetAttribute(Attribute::Reset)
         )?;
         //print!("F1 Exit");
-        queue!(stdout(), cursor::MoveTo(self.offset_x + self.x, self.y), cursor::Show)?;
+        queue!(
+            stdout(),
+            cursor::MoveTo(self.offset_x + self.x, self.y),
+            cursor::Show
+        )?;
 
         stdout().flush()?;
         Ok(true)

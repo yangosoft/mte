@@ -61,9 +61,7 @@ impl Editor {
             }),
             KeyEvent {
                 code:
-                    direction
-                    @
-                    (KeyCode::Up
+                    direction @ (KeyCode::Up
                     | KeyCode::Down
                     | KeyCode::Left
                     | KeyCode::Right
@@ -76,7 +74,7 @@ impl Editor {
                 modifiers: KeyModifiers::NONE,
             } => {
                 let mut is_backspace = false;
-                if matches!(key, KeyCode::Delete) {
+                if matches!(key, KeyCode::Backspace) {
                     is_backspace = true;
                     self.render.move_cursor(KeyCode::Right)
                 }

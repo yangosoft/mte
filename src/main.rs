@@ -16,6 +16,6 @@ fn main() -> crossterm::Result<()> {
     let mut e = Editor::new();
     e.clear_screen();
     while e.run()? {}
-    
+
     Ok(())
 }
